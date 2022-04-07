@@ -7,7 +7,7 @@ from typing import Optional
 from warnings import warn
 
 from pyknos.nflows import distributions as distributions_
-from pyknos.nflows import flows, transforms
+from pyknos.nflows import transforms
 from pyknos.nflows.nn import nets
 from torch import Tensor, nn, relu, tanh, tensor, uint8
 
@@ -19,6 +19,7 @@ from sbi.utils.sbiutils import (
 from sbi.utils.torchutils import create_alternating_binary_mask
 from sbi.utils.user_input_checks import check_data_device, check_embedding_net_device
 
+from sbi.bf_custom import flows
 
 def build_made(
     batch_x: Tensor,
