@@ -33,11 +33,30 @@ class Flow(Distribution):
         else:
             self._embedding_net = torch.nn.Identity()
 
+    def _gaussian_kernel_matrix(self, x, y, sigmas):
+        dist = ((x[:, None, :] - y[None, :, :]) ** 2).sum(axis=-1)[:, :, None]
+        beta = 1. / (2. * torch.Tensor(sigmas)[None, :])
+        s = torch.matmul(dist, beta)
+        k = torch.exp(-s).sum(axis=-1)
+        return k
+        
+    def _mmd(self, embedding):
+        z = torch.randn(embedding.shape)
+        sigmas = [
+            1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 5, 10, 15, 20, 25, 30, 35, 100,
+            1e3, 1e4, 1e5, 1e6
+        ]
+        
+        loss = torch.mean(self._gaussian_kernel_matrix(embedding, embedding, sigmas))  
+        loss += torch.mean(self._gaussian_kernel_matrix(z, z, sigmas))  
+        loss -= 2 * torch.mean(self._gaussian_kernel_matrix(embedding, z, sigmas))
+        return loss  
+
     def _log_prob(self, inputs, context):
         embedded_context = self._embedding_net(context)
         noise, logabsdet = self._transform(inputs, context=embedded_context)
         log_prob = self._distribution.log_prob(noise, context=embedded_context)
-        return log_prob + logabsdet
+        return log_prob + logabsdet - self._mmd(embedded_context)
 
     def _sample(self, num_samples, context):
         embedded_context = self._embedding_net(context)
