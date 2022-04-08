@@ -93,3 +93,7 @@ target/
 
 # Class diagram
 *.pyns
+
+.idea/
+
+*/.idea/
